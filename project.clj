@@ -1,6 +1,6 @@
-(defproject io.sarnowski/lein-docker "1.2.0-SNAPSHOT"
+(defproject gorillalabs/lein-docker "1.3.0"
   :description "A leiningen plugin to build docker images and deploy them."
-  :url "https://github.com/sarnowski/lein-docker"
+  :url "https://github.com/gorillalabs/lein-docker"
 
   :license {:name "ISC License"
             :url "http://opensource.org/licenses/ISC"}
@@ -11,5 +11,4 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [leiningen-core "2.5.0"]]
 
-  :deploy-repositories [["releases" :clojars]]
-  :signing {:gpg-key "tobias@sarnowski.io"})
+  :deploy-repositories [["releases" :clojars]])
