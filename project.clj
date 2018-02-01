@@ -11,8 +11,7 @@
   :min-lein-version "2.5.0"
   :eval-in-leiningen true
 
-  :dependencies [[org.clojure/clojure "1.6.0"]
-                 [leiningen-core "2.5.0"]]
+  :dependencies []
 
   :vcs :git
   :scm {:name "git"
