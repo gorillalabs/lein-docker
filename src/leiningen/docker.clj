@@ -1,6 +1,7 @@
 (ns leiningen.docker
   (:require [leiningen.core.eval :as eval]
-            [leiningen.core.main :as main]))
+            [leiningen.core.main :as main]
+            [clojure.java.shell :as shell]))
 
 (defn- exec [& args]
   (apply main/debug "Exec: docker" args)
@@ -33,13 +34,32 @@
         (main/warn "Docker image could not be pushed.")
         (main/exit exit-code)))))
 
-(def valid-command? #{:build :push})
+(defn- image-exists? [image]
+  (let [{:keys [exit out err]} (shell/sh "docker" "images" "-q" image)]
+    (if (zero? exit)
+      (boolean (not-empty out))
+      (do
+        (main/warn err)
+        (main/exit exit)))))
+
+(defn- rmi [image]
+  (when (image-exists? image)
+    (main/info "Removing docker image:" image)
+    (let [exit-code (exec "rmi" image)]
+      (if (zero? exit-code)
+        (main/info "Docker image removed.")
+        (do
+          (main/warn "Docker image could not be removed.")
+          (main/exit exit-code))))))
+
+(def valid-command? #{:build :push :rmi})
 
 (defn docker
   "Builds and delpoys docker images.
    Commands:
      'build' builds your docker image
-     'push' pushes your docker image"
+     'push' pushes your docker image
+     'rmi' removes your docker image"
   [project command & [image-name]]
 
   (let [command (keyword command)]
@@ -68,4 +88,6 @@
                  (doseq [image (rest images)]
                    (tag (first images) image)))
         :push (doseq [image images]
-                (push image))))))
+                (push image))
+        :rmi (doseq [image images]
+               (rmi image))))))

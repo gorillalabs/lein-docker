@@ -18,6 +18,7 @@ Available commands:
 
     $ lein docker build
     $ lein docker push
+    $ lein docker rmi
 
 ## Configuration
 
