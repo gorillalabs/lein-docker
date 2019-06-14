@@ -7,9 +7,15 @@
   (apply main/debug "Exec: docker" args)
   (apply eval/sh "docker" args))
 
-(defn- build [image dockerfile build-dir]
-  (main/info "Building Docker image:" image)
-  (let [exit-code (exec "build" "-f" dockerfile "-t" image build-dir)]
+(defn- build
+  "lein docker build [image-name [additional-arguments-to-build]]
+     Builds image name.  
+     additional-arguments are inserted into the build command line before the final path argument."
+  [image dockerfile build-dir additional-args]
+  (if (not-empty additional-args)
+    (main/info "Building Docker image:" image "with additional args:" additional-args)
+    (main/info "Building Docker image:" image))
+  (let [exit-code (apply exec "build" "-f" dockerfile "-t" image (concat additional-args [build-dir]))]
     (if (zero? exit-code)
       (main/info "Docker image built.")
       (do
@@ -25,7 +31,10 @@
         (main/warn "Docker image could not be tagged.")
         (main/exit exit-code)))))
 
-(defn- push [image]
+(defn- push
+  "lein docker push [image-name]
+     Pushes image-name to its registry"
+  [image]
   (main/info "Pushing Docker image:" image)
   (let [exit-code (exec "push" image)]
     (if (zero? exit-code)
@@ -42,7 +51,9 @@
         (main/warn err)
         (main/exit exit)))))
 
-(defn- rmi [image]
+(defn- rmi
+  "Remove an image from the local docker system."
+  [image]
   (when (image-exists? image)
     (main/info "Removing docker image:" image)
     (let [exit-code (exec "rmi" image)]
@@ -60,7 +71,8 @@
      'build' builds your docker image
      'push' pushes your docker image
      'rmi' removes your docker image"
-  [project command & [image-name]]
+  {:subtasks [#'build #'push #'rmi]}
+  [project command & [image-name & additional-args]]
 
   (let [command (keyword command)]
 
@@ -84,7 +96,7 @@
 
       (case command
         :build (do
-                 (build (first images) dockerfile build-dir)
+                 (build (first images) dockerfile build-dir additional-args)
                  (doseq [image (rest images)]
                    (tag (first images) image)))
         :push (doseq [image images]
