@@ -1,7 +1,23 @@
 (ns leiningen.docker
   (:require [leiningen.core.eval :as eval]
             [leiningen.core.main :as main]
-            [clojure.java.shell :as shell]))
+            [clojure.java.shell :as shell]
+            [clojure.string :as str]))
+
+(def var-matcher-pattern #"\$\{(?<varname>[A-Za-z0-9_]+)(?::-(?<default>[^}]+))?\}")
+
+(defn inject-environment-variables
+  "Given a string, replace text of the form ${NAME} or ${NAME:-default} 
+   with the environment variable value corresponding to NAME.
+   In the second form, if NAME is not defined, use the default string.  
+   If the default string is not provided and NAME is not defined, replace
+   the expression with the empty string."
+  [string]
+  (reduce (fn [s [match environment-variable default]]
+            (let [replacement (or (System/getenv environment-variable) default "")]
+              (str/replace s match replacement)))
+          string
+          (re-seq var-matcher-pattern string)))
 
 (defn- exec [& args]
   (apply main/debug "Exec: docker" args)
@@ -63,6 +79,7 @@
           (main/warn "Docker image could not be removed.")
           (main/exit exit-code))))))
 
+
 (def valid-command? #{:build :push :rmi})
 
 (defn docker
@@ -82,16 +99,16 @@
 
     (let [config (:docker project)
           image-name (or image-name
-                         (:image-name config)
+                         (inject-environment-variables (:image-name config))
                          (str (:name project)))
           tags (or (:tags config)
                    ["%s"])
           images (map
-                   #(str image-name ":" (format % (:version project)))
+                   #(str image-name ":" (format (inject-environment-variables %) (:version project)))
                    tags)
-          build-dir (or (:build-dir config)
+          build-dir (or (inject-environment-variables (:build-dir config))
                         (:root project))
-          dockerfile (or (:dockerfile config)
+          dockerfile (or (inject-environment-variables (:dockerfile config))
                          "Dockerfile")]
 
       (case command

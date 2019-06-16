@@ -9,16 +9,16 @@ A Leiningen plugin to build and deploy [Docker](https://www.docker.com/) images.
 Add docker-deploy to your plugin list in your `project.clj`:
 
 ```clojure
-:plugins [[gorillalabs/lein-docker "1.3.0"]]
+:plugins [[gorillalabs/lein-docker "1.6.0"]]
 ```
 
 (see version badge above for newest release)
 
 Available commands:
 
-    $ lein docker build
-    $ lein docker push
-    $ lein docker rmi
+    $ lein docker build [image-name [additional-arguments ... ]]
+    $ lein docker push [image-name]
+    $ lein docker rmi [image-name]
 
 ## Configuration
 
@@ -37,6 +37,24 @@ Defaults:
 * `:tags` is your project's version
 * `:dockerfile` points to `Dockerfile`
 * `:build-dir` points to the project's root
+
+### Injecting environment variables into configuration
+
+With a CI/CD pipeline such as Jenkins, you may want to generate Docker artifacts tagged
+against specific properties of a build run. The values in the :docker configuration options
+may contain bash-like references to environment variables, which will be replaced with
+values from the environment.  For example:
+
+```clojure
+:docker {:image-name "myregistry.example.org/myimage"
+         :tags ["%s-${BUILD_NUMBER:-unknown}"]}
+```
+
+Running `lein docker build` command under Jenkiuns line will generate an image tagged with the
+project number and build number (e.g., 1.6.0-306).  If BUILD_NUMBER is undefined, as when
+outside of Jenkins, then the default value ("unknown") will be spliced in instead.  Environment
+variable injection is supported for the `:image-name`, `:tags`, `:dockerfile`, and `:build-dir`
+entries in the project's `:docker` map.
 
 ## Releasing your docker images
 
