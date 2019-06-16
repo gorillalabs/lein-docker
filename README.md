@@ -50,11 +50,14 @@ values from the environment.  For example:
          :tags ["%s-${BUILD_NUMBER:-unknown}"]}
 ```
 
-Running `lein docker build` command under Jenkiuns line will generate an image tagged with the
+Running `lein docker build` command under Jenkins line will generate an image tagged with the
 project number and build number (e.g., 1.6.0-306).  If BUILD_NUMBER is undefined, as when
-outside of Jenkins, then the default value ("unknown") will be spliced in instead.  Environment
-variable injection is supported for the `:image-name`, `:tags`, `:dockerfile`, and `:build-dir`
-entries in the project's `:docker` map.
+outside of Jenkins, then the default value ("unknown") will be spliced in instead.  If the
+environment variable expression does not contain a default string and the referenced
+environment variable is not defined, the expression is replaced with the empty string.
+
+Environment variable injection is supported for the `:image-name`, `:tags`, `:dockerfile`,
+and `:build-dir` entries in the project's `:docker` map.
 
 ## Releasing your docker images
 
